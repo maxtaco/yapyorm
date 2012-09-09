@@ -12,58 +12,31 @@ class DBH:
 
     loaded_db_info = False
 
-    host = "10.0.0.1"
-    username = "my-user-name"
-    password = "my-pw"
-    database = "my-db"
     _dbh = None
+    _config = None
     querydebug = False
 
     #--------------------
 
     @classmethod
-    def read_db_info (klass):
-
-        if klass.loaded_db_info:
-            return
-
-        rx = re.compile ('\\s*=\\s*')
-        fn = os.getenv ('HOME') + '/.yapyorm'
-        
-        try:
-            fh = open (fn, "r")
-            lineno = 0
-            for line in fh:
-                lineno += 1
-
-                # Strip out any comments
-                v = line.split ('#')
-                if len (v) > 1:
-                    line = v[0]
-
-                v = rx.split (line)
-                if len(v) != 2:
-                    raise err.Dotfile, \
-                        "%s:%d: bad line" % (fn, lineno)
-                setattr (klass, v[0], v[1].strip ())
-        except IOError:
-            pass
-
-        klass.loaded_db_info = True
+    def set_config (klass, cfg):
+        klass._config = cfg
 
     #--------------------
 
     @classmethod
     def connect (klass):
-        klass.read_db_info ()
+        cfg = klass._config
+        if not cfg:
+            raise err.DB, "must call DBH.set_config before attempting connect"
         try:
-            return MySQLdb.connect (host = klass.host,
-                                    user = klass.username,
-                                    passwd = klass.password,
-                                    db = klass.database)
+            return MySQLdb.connect (host = cfg.host,
+                                    user = cfg.username,
+                                    passwd = cfg.password,
+                                    db = cfg.database)
         except MySQLdb.Error, e:
             s = "Error %d: %s" % (e.args[0], e.args[1])
-            raise err.DB, e
+            raise err.DB, s
 
     #--------------------
 
