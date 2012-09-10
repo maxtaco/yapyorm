@@ -199,6 +199,41 @@ class ForeignKey (Key):
         return r
 
     #---------------
+       
+##-----------------------------------------------------------------------
+
+class DateTime (Field):
+
+    fmt = "%Y-%m-%d %H:%M:%S"
+
+    def __init__ (self, nm):
+        Field.__init__ (self, nm)
+
+    def to_value (self, v):
+        t = type (v)
+        if v is None: pass
+        elif t is str: pass
+        elif t is datetime.datetime: v = v.strftime (self.fmt)
+        elif t is time.struct_time: v = v.strftime (self.fmt)
+        else: 
+            raise err.TypeError, \
+                "cannot convert to date string: %s (type=%s)" % (v, type (v))
+        return v
+
+    def from_value (self, v):
+        if v is not None:
+            if type (v) is str:
+                v = time.strptime (v, self.fmt)
+            if type (v) is time.struct_time:
+                v = datetime.datetime ( month = v.tm_mon,
+                    year =  v.tm_year,
+                    day = v.tm_mday,
+                    minute = v.tm_min,
+                    second = v.tm_second,
+                    hour = v.tm_hour )
+            if type (v) is not datetime.datetime:
+                raise err.TypeError, "cannot convert to date: %s" % v
+        return v
         
 ##-----------------------------------------------------------------------
 
@@ -259,13 +294,22 @@ class Sorter (Key):
         elif i == klass.DESC: return "DESC"
         else: raise err.Order, \
                 "order param must be either Sorter.ASC or Sorter.DESC"
-
+ 
 ##-----------------------------------------------------------------------
 
 class DateSorter (Date, Sorter):
 
     def __init__ (self, nm, order):
         Date.__init__ (self, nm)
+        self._order = order
+
+ 
+##-----------------------------------------------------------------------
+
+class DateTimeSorter (DateTime, Sorter):
+
+    def __init__ (self, nm, order):
+        DateTime.__init__ (self, nm)
         self._order = order
 
 ##-----------------------------------------------------------------------

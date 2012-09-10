@@ -21,7 +21,7 @@ class DBH:
     @classmethod
     def set_config (klass, cfg):
         klass._config = cfg
-
+        
     #--------------------
 
     @classmethod
