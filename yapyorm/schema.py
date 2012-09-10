@@ -262,10 +262,11 @@ class Sorter (Key):
 
 ##-----------------------------------------------------------------------
 
-class DateSorter (Key, Date):
+class DateSorter (Date, Sorter):
 
     def __init__ (self, nm, order):
-        Date.__init__ (self, nm, order)
+        Date.__init__ (self, nm)
+        self._order = order
 
 ##-----------------------------------------------------------------------
 
