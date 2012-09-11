@@ -33,7 +33,8 @@ class DBH:
             return MySQLdb.connect (host = cfg.host,
                                     user = cfg.username,
                                     passwd = cfg.password,
-                                    db = cfg.database)
+                                    db = cfg.database,
+                                    charset = 'utf8')
         except MySQLdb.Error, e:
             s = "Error %d: %s" % (e.args[0], e.args[1])
             raise err.DB, s
