@@ -297,16 +297,15 @@ class Sorter (Key):
  
 ##-----------------------------------------------------------------------
 
-class DateSorter (Date, Sorter):
+class DateSorter (Sorter,Date):
 
     def __init__ (self, nm, order):
         Date.__init__ (self, nm)
-        self._order = order
-
+        Sorter.__init__(self, nm, order)
  
 ##-----------------------------------------------------------------------
 
-class DateTimeSorter (DateTime, Sorter):
+class DateTimeSorter (Sorter, DateTime):
 
     def __init__ (self, nm, order):
         DateTime.__init__ (self, nm)
@@ -592,6 +591,8 @@ class BaseObj (object):
     #--------------------
 
     def _fset (self, n, v):
+        if not self._constructing:
+            self._updates[n] = True
         setattr (self, "_%s" % n, v)
     def _fget (self, n):
         return getattr (self, "_%s" % n)
@@ -663,9 +664,12 @@ class BaseObj (object):
     def __init__ (self, dct = {}, _loaded = False, **kwargs):
         d2 = dct.copy ()
         self._loaded = _loaded
+        self._constructing = True
         self.db_def.obj_init (self)
         for k in kwargs.keys ():
             d2[k] = kwargs[k]
+        self._constructing = False
+        self._updates = {}
         self.load_from_dict (d2)
 
     #--------------------
@@ -822,6 +826,16 @@ class BaseObj (object):
 
     #--------------------
 
+    def store_or_update (self):
+        try:
+            self.load1(**self.to_key_dict())
+            self.update()
+        except err.NotFound:
+            self.store ()
+        return self
+
+    #--------------------
+
     def store (self):
         if self._loaded:
             self.update ()
@@ -873,7 +887,7 @@ class BaseObj (object):
         (wc, lim_sql,order) = self.db_def.where_clause (dct = d , limit = True)
         up_set = []
         for f in self.db_def.fields ():
-            if f.is_mutable ():
+            if f.is_mutable () and self._updates.get(f.name()):
                 n = f.name ()
                 v = f.to_sql_value (self._fget (n))
                 up_set += [ (n, v) ]
